@@ -425,7 +425,7 @@ public class SpringApplication {
 	private <T> Collection<T> getSpringFactoriesInstances(Class<T> type, Class<?>[] parameterTypes, Object... args) {
 		ClassLoader classLoader = getClassLoader();
 		// Use names and ensure unique to protect against duplicates
-		// 获得指定类型所对应的，在 META-INF/spring.factories 里的类名的数组
+		// 获得指定类型所对应的，在 META-INF/spring.factories (包括项目jar包里面的) 里的类名的数组
 		// 如：type是 ApplicationContextInitializer、ApplicationListener
 		Set<String> names = new LinkedHashSet<>(SpringFactoriesLoader.loadFactoryNames(type, classLoader));
 		// 创建实例
