@@ -422,8 +422,12 @@ public class SpringApplication {
 	private <T> Collection<T> getSpringFactoriesInstances(Class<T> type, Class<?>[] parameterTypes, Object... args) {
 		ClassLoader classLoader = getClassLoader();
 		// Use names and ensure unique to protect against duplicates
+		// 获得指定类型所对应的，在 META-INF/spring.factories 里的类名的数组
+		// 如：type是 ApplicationContextInitializer、ApplicationListener
 		Set<String> names = new LinkedHashSet<>(SpringFactoriesLoader.loadFactoryNames(type, classLoader));
+		// 创建实例
 		List<T> instances = createSpringFactoriesInstances(type, parameterTypes, classLoader, args, names);
+		// 排序
 		AnnotationAwareOrderComparator.sort(instances);
 		return instances;
 	}
@@ -432,11 +436,16 @@ public class SpringApplication {
 	private <T> List<T> createSpringFactoriesInstances(Class<T> type, Class<?>[] parameterTypes,
 			ClassLoader classLoader, Object[] args, Set<String> names) {
 		List<T> instances = new ArrayList<>(names.size());
+		// 遍历 names 数组
 		for (String name : names) {
 			try {
+				// 获得 name 对应的类
 				Class<?> instanceClass = ClassUtils.forName(name, classLoader);
+				// 判断类是否实现自 type 类，如：type是 ApplicationContextInitializer、ApplicationListener
 				Assert.isAssignable(type, instanceClass);
+				// 获取构造方法
 				Constructor<?> constructor = instanceClass.getDeclaredConstructor(parameterTypes);
+				// 创建实例
 				T instance = (T) BeanUtils.instantiateClass(constructor, args);
 				instances.add(instance);
 			}
