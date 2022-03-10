@@ -267,7 +267,10 @@ public class SpringApplication {
 	public SpringApplication(ResourceLoader resourceLoader, Class<?>... primarySources) {
 		this.resourceLoader = resourceLoader;
 		Assert.notNull(primarySources, "PrimarySources must not be null");
+		// primarySources 为 run 方法传入自定义的启动引导类（可以一次启动多个）
+		// 如：SpringApplication.run(SampleTomcatApplication.class, args) 中的 SampleTomcatApplication
 		this.primarySources = new LinkedHashSet<>(Arrays.asList(primarySources));
+		// 推断web应用类型 REACTIVE、NONE、SERVLET
 		this.webApplicationType = WebApplicationType.deduceFromClasspath();
 		// 设置系统初始化器
 		setInitializers((Collection) getSpringFactoriesInstances(ApplicationContextInitializer.class));
