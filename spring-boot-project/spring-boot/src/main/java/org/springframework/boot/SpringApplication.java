@@ -287,7 +287,7 @@ public class SpringApplication {
 			// 获得当前 StackTraceElement 数组
 			StackTraceElement[] stackTrace = new RuntimeException().getStackTrace();
 			for (StackTraceElement stackTraceElement : stackTrace) {
-				// 找出实现了 mian 方法的那个类
+				// 找出实现了 main 方法的那个类
 				if ("main".equals(stackTraceElement.getMethodName())) {
 					return Class.forName(stackTraceElement.getClassName());
 				}
