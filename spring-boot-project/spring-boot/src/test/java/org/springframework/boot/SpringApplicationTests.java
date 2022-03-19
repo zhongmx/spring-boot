@@ -159,8 +159,7 @@ class SpringApplicationTests {
 	void reinstateHeadlessProperty() {
 		if (this.headlessProperty == null) {
 			System.clearProperty("java.awt.headless");
-		}
-		else {
+		} else {
 			System.setProperty("java.awt.headless", this.headlessProperty);
 		}
 	}
@@ -743,7 +742,7 @@ class SpringApplicationTests {
 
 	@Test
 	void loadSources() {
-		Class<?>[] sources = { ExampleConfig.class, TestCommandLineRunner.class };
+		Class<?>[] sources = {ExampleConfig.class, TestCommandLineRunner.class};
 		TestSpringApplication application = new TestSpringApplication(sources);
 		application.getSources().add("a");
 		application.setWebApplicationType(WebApplicationType.NONE);
@@ -769,7 +768,7 @@ class SpringApplicationTests {
 
 	@Test
 	void runComponents() {
-		this.context = SpringApplication.run(new Class<?>[] { ExampleWebConfig.class, Object.class }, new String[0]);
+		this.context = SpringApplication.run(new Class<?>[]{ExampleWebConfig.class, Object.class}, new String[0]);
 		assertThat(this.context).isNotNull();
 	}
 
@@ -857,7 +856,7 @@ class SpringApplicationTests {
 	void defaultCommandLineArgs() {
 		SpringApplication application = new SpringApplication(ExampleConfig.class);
 		application.setDefaultProperties(
-				StringUtils.splitArrayElementsIntoProperties(new String[] { "baz=", "bar=spam" }, "="));
+				StringUtils.splitArrayElementsIntoProperties(new String[]{"baz=", "bar=spam"}, "="));
 		application.setWebApplicationType(WebApplicationType.NONE);
 		this.context = application.run("--bar=foo", "bucket", "crap");
 		assertThat(this.context).isInstanceOf(AnnotationConfigApplicationContext.class);
@@ -1143,7 +1142,7 @@ class SpringApplicationTests {
 	}
 
 	private Condition<ConfigurableEnvironment> matchingPropertySource(final Class<?> propertySourceClass,
-			final String name) {
+																	  final String name) {
 
 		return new Condition<ConfigurableEnvironment>("has property source") {
 
@@ -1223,8 +1222,7 @@ class SpringApplicationTests {
 		protected BeanDefinitionLoader createBeanDefinitionLoader(BeanDefinitionRegistry registry, Object[] sources) {
 			if (this.useMockLoader) {
 				this.loader = mock(BeanDefinitionLoader.class);
-			}
-			else {
+			} else {
 				this.loader = spy(super.createBeanDefinitionLoader(registry, sources));
 			}
 			return this.loader;
