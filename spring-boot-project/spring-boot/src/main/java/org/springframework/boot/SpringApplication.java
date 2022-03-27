@@ -326,6 +326,7 @@ public class SpringApplication {
 				new StartupInfoLogger(this.mainApplicationClass).logStarted(getApplicationLog(), stopWatch);
 			}
 			listeners.started(context);
+			// 启动加载器调用
 			callRunners(context, applicationArguments);
 		} catch (Throwable ex) {
 			handleRunFailure(context, ex, listeners);
