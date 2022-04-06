@@ -451,7 +451,7 @@ public class SpringApplication {
 				Assert.isAssignable(type, instanceClass);
 				// 获取构造方法
 				Constructor<?> constructor = instanceClass.getDeclaredConstructor(parameterTypes);
-				// 创建实例
+				// 通过反射创建实例
 				T instance = (T) BeanUtils.instantiateClass(constructor, args);
 				instances.add(instance);
 			} catch (Throwable ex) {
