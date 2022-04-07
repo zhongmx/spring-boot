@@ -363,10 +363,14 @@ public class SpringApplication {
 	private ConfigurableEnvironment prepareEnvironment(SpringApplicationRunListeners listeners,
 													   ApplicationArguments applicationArguments) {
 		// Create and configure the environment
+		// 获取对应的ConfigurableEnvironment
 		ConfigurableEnvironment environment = getOrCreateEnvironment();
+		// 进行配置
 		configureEnvironment(environment, applicationArguments.getSourceArgs());
 		ConfigurationPropertySources.attach(environment);
+		// 发布环境已经准备好的事件
 		listeners.environmentPrepared(environment);
+		// 把准备好的环境绑定到 SpringApplication 中
 		bindToSpringApplication(environment);
 		if (!this.isCustomEnvironment) {
 			environment = new EnvironmentConverter(getClassLoader()).convertEnvironmentIfNecessary(environment,
@@ -483,6 +487,8 @@ public class SpringApplication {
 		if (this.environment != null) {
 			return this.environment;
 		}
+		// 根据不同的类型创建出 标准的环境对象
+		// this.webApplicationType 在 new SpringApplication 的时候就已经被设置好了
 		switch (this.webApplicationType) {
 			case SERVLET:
 				return new StandardServletEnvironment();
