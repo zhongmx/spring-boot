@@ -307,6 +307,7 @@ public class SpringApplication {
 	 */
 	public ConfigurableApplicationContext run(String... args) {
 		// 创建并启动计时监控类
+		// StopWatch 主要用于简单统计 run 启动过程的时长
 		StopWatch stopWatch = new StopWatch();
 		stopWatch.start();
 		ConfigurableApplicationContext context = null;
@@ -319,7 +320,8 @@ public class SpringApplication {
 		try {
 			// 初始化默认应用参数类
 			ApplicationArguments applicationArguments = new DefaultApplicationArguments(args);
-			// 根据运行监听器（SpringApplicationRunListeners）和应用参数（ApplicationArguments）来准备 Spring 环境
+			// 根据运行监听器（SpringApplicationRunListeners）和应用参数（ApplicationArguments）来准备 Spring 环境，加载属性配置
+			// 执行完成后，所有的 environment 的属性都会加载进来，包括 application.properties 和外部的属性配置
 			ConfigurableEnvironment environment = prepareEnvironment(listeners, applicationArguments);
 			configureIgnoreBeanInfo(environment);
 			// 创建 Banner 打印类
@@ -327,10 +329,11 @@ public class SpringApplication {
 			// 创建应用上下文（Spring容器）
 			context = createApplicationContext();
 			// 应用上下文的前置处理（Spring容器的前置处理）
+			// 主要是调用所有初始化类的 initialize 方法
 			prepareContext(context, environment, listeners, applicationArguments, printedBanner);
 			// 刷新容器
 			refreshContext(context);
-			// 应用上下文的后置处理（Spring容器的后置处理）
+			// 应用上下文的后置处理（Spring容器的后置处理）， 默认实现为空
 			afterRefresh(context, applicationArguments);
 			// 停止计时监控类
 			stopWatch.stop();
@@ -341,6 +344,7 @@ public class SpringApplication {
 			// 发布 应用上下文（Spring容器）启动完成事件
 			listeners.started(context);
 			// 启动加载器调用 （执行所有 Runner 运行器）
+			// 调用 ApplicationRunner 或者 CommandLineRunner 的运行方法
 			callRunners(context, applicationArguments);
 		} catch (Throwable ex) {
 			handleRunFailure(context, ex, listeners);
