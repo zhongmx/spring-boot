@@ -311,23 +311,36 @@ public class SpringApplication {
 		stopWatch.start();
 		ConfigurableApplicationContext context = null;
 		configureHeadlessProperty();
+		// 获取监听器，获取spring.factories中的 SpringApplicationRunListener
+		// 如：org.springframework.boot.SpringApplicationRunListener = org.springframework.boot.context.event.EventPublishingRunListener
 		SpringApplicationRunListeners listeners = getRunListeners(args);
+		// 启动监听器
 		listeners.starting();
 		try {
+			// 初始化默认应用参数类
 			ApplicationArguments applicationArguments = new DefaultApplicationArguments(args);
+			// 根据运行监听器（SpringApplicationRunListeners）和应用参数（ApplicationArguments）来准备 Spring 环境
 			ConfigurableEnvironment environment = prepareEnvironment(listeners, applicationArguments);
 			configureIgnoreBeanInfo(environment);
+			// 创建 Banner 打印类
 			Banner printedBanner = printBanner(environment);
+			// 创建应用上下文（Spring容器）
 			context = createApplicationContext();
+			// 应用上下文的前置处理（Spring容器的前置处理）
 			prepareContext(context, environment, listeners, applicationArguments, printedBanner);
+			// 刷新容器
 			refreshContext(context);
+			// 应用上下文的后置处理（Spring容器的后置处理）
 			afterRefresh(context, applicationArguments);
+			// 停止计时监控类
 			stopWatch.stop();
 			if (this.logStartupInfo) {
 				new StartupInfoLogger(this.mainApplicationClass).logStarted(getApplicationLog(), stopWatch);
 			}
+
+			// 发布 应用上下文（Spring容器）启动完成事件
 			listeners.started(context);
-			// 启动加载器调用
+			// 启动加载器调用 （执行所有 Runner 运行器）
 			callRunners(context, applicationArguments);
 		} catch (Throwable ex) {
 			handleRunFailure(context, ex, listeners);
