@@ -187,6 +187,8 @@ public class ConfigFileApplicationListener implements EnvironmentPostProcessor, 
 
 	@Override
 	public void onApplicationEvent(ApplicationEvent event) {
+		// 如果事件类型是 ApplicationEnvironmentPreparedEvent
+		// 举例 org.springframework.boot.SpringApplication.prepareEnvironment 中会发布一个表示环境已经准备好的事件，该监听器就监听到了
 		if (event instanceof ApplicationEnvironmentPreparedEvent) {
 			onApplicationEnvironmentPreparedEvent((ApplicationEnvironmentPreparedEvent) event);
 		}
@@ -196,9 +198,18 @@ public class ConfigFileApplicationListener implements EnvironmentPostProcessor, 
 	}
 
 	private void onApplicationEnvironmentPreparedEvent(ApplicationEnvironmentPreparedEvent event) {
+		// 从 spring.factories 中获取 key 为 EnvironmentPostProcessor 的 values,然后实例化
+		// 举例：
+		//org.springframework.boot.env.EnvironmentPostProcessor=\
+		//org.springframework.boot.cloud.CloudFoundryVcapEnvironmentPostProcessor,\
+		//org.springframework.boot.env.SpringApplicationJsonEnvironmentPostProcessor,\
+		//org.springframework.boot.env.SystemEnvironmentPropertySourceEnvironmentPostProcessor,\
+		//org.springframework.boot.reactor.DebugAgentEnvironmentPostProcessor
 		List<EnvironmentPostProcessor> postProcessors = loadPostProcessors();
 		postProcessors.add(this);
+		// 排序
 		AnnotationAwareOrderComparator.sort(postProcessors);
+		// 循环一次执行 postProcessEnvironment 方法
 		for (EnvironmentPostProcessor postProcessor : postProcessors) {
 			postProcessor.postProcessEnvironment(event.getEnvironment(), event.getSpringApplication());
 		}
