@@ -393,9 +393,13 @@ public class SpringApplication {
 
 	private void prepareContext(ConfigurableApplicationContext context, ConfigurableEnvironment environment,
 								SpringApplicationRunListeners listeners, ApplicationArguments applicationArguments, Banner printedBanner) {
+		// 设置 context 的 environment 属性，enviroment 表示当前应用程序正在运行的环境
 		context.setEnvironment(environment);
+		// 执行 context 后置处理，配置一些属性，如：beanNameGenerator 等
 		postProcessApplicationContext(context);
+		// 初始化 ApplicationContextInitializer 包括 spring.factories和自定义的实例
 		applyInitializers(context);
+		// 发送容器已经准备好的事件，通知各监听器
 		listeners.contextPrepared(context);
 		if (this.logStartupInfo) {
 			logStartupInfo(context.getParent() == null);
@@ -403,8 +407,10 @@ public class SpringApplication {
 		}
 		// Add boot specific singleton beans
 		ConfigurableListableBeanFactory beanFactory = context.getBeanFactory();
+		// 注册启动参数 bean，这里将容器指定的参数封装成bean，注入容器
 		beanFactory.registerSingleton("springApplicationArguments", applicationArguments);
 		if (printedBanner != null) {
+			// 注册 Banner bean
 			beanFactory.registerSingleton("springBootBanner", printedBanner);
 		}
 		if (beanFactory instanceof DefaultListableBeanFactory) {
@@ -415,20 +421,26 @@ public class SpringApplication {
 			context.addBeanFactoryPostProcessor(new LazyInitializationBeanFactoryPostProcessor());
 		}
 		// Load the sources
+		// 获取我们的启动类指定的所有参数，可以是多个
+		// 例如：SpringApplication.run(SampleTomcatApplication.class, args); 获取的就是 SampleTomcatApplication
 		Set<Object> sources = getAllSources();
 		Assert.notEmpty(sources, "Sources must not be empty");
+		// 加载启动类，将启动类注册到容器中
 		load(context, sources.toArray(new Object[0]));
+		// 发布容器已加载事件，通知各监听器
 		listeners.contextLoaded(context);
 	}
 
 	private void refreshContext(ConfigurableApplicationContext context) {
 		if (this.registerShutdownHook) {
 			try {
+				// 注册 ShutdownHook 钩子
 				context.registerShutdownHook();
 			} catch (AccessControlException ex) {
 				// Not allowed in some environments.
 			}
 		}
+		// 刷新容器
 		refresh((ApplicationContext) context);
 	}
 
@@ -612,14 +624,19 @@ public class SpringApplication {
 		Class<?> contextClass = this.applicationContextClass;
 		if (contextClass == null) {
 			try {
+				// 根据不同的类型创建出 应用上下文（Spring容器）
+				// this.webApplicationType 在 new SpringApplication 的时候就已经被设置好了
 				switch (this.webApplicationType) {
 					case SERVLET:
+						// AnnotationConfigServletWebServerApplicationContext
 						contextClass = Class.forName(DEFAULT_SERVLET_WEB_CONTEXT_CLASS);
 						break;
 					case REACTIVE:
+						// AnnotationConfigReactiveWebServerApplicationContext
 						contextClass = Class.forName(DEFAULT_REACTIVE_WEB_CONTEXT_CLASS);
 						break;
 					default:
+						// AnnotationConfigApplicationContext
 						contextClass = Class.forName(DEFAULT_CONTEXT_CLASS);
 				}
 			} catch (ClassNotFoundException ex) {
@@ -663,10 +680,13 @@ public class SpringApplication {
 	 */
 	@SuppressWarnings({"rawtypes", "unchecked"})
 	protected void applyInitializers(ConfigurableApplicationContext context) {
+		// getInitializers() 从 SpringApplication 类中的 initializers 集合获取所有的 ApplicationContextInitializer
+		// 在 new SpringApplication() 的时候就设置了系统初始化器
 		for (ApplicationContextInitializer initializer : getInitializers()) {
 			Class<?> requiredType = GenericTypeResolver.resolveTypeArgument(initializer.getClass(),
 					ApplicationContextInitializer.class);
 			Assert.isInstanceOf(requiredType, context, "Unable to call initializer.");
+			// 调用 ApplicationContextInitializer 中的 initialize 方法
 			initializer.initialize(context);
 		}
 	}
@@ -725,6 +745,7 @@ public class SpringApplication {
 		if (logger.isDebugEnabled()) {
 			logger.debug("Loading source " + StringUtils.arrayToCommaDelimitedString(sources));
 		}
+		// 创建 BeanDefinitionLoader
 		BeanDefinitionLoader loader = createBeanDefinitionLoader(getBeanDefinitionRegistry(context), sources);
 		if (this.beanNameGenerator != null) {
 			loader.setBeanNameGenerator(this.beanNameGenerator);
@@ -822,14 +843,21 @@ public class SpringApplication {
 
 	private void callRunners(ApplicationContext context, ApplicationArguments args) {
 		List<Object> runners = new ArrayList<>();
+		// 获得所有实现了 ApplicationRunner 的 bean
 		runners.addAll(context.getBeansOfType(ApplicationRunner.class).values());
+		// 获得所有实现了 CommandLineRunner 的 bean
 		runners.addAll(context.getBeansOfType(CommandLineRunner.class).values());
+		// 排序
 		AnnotationAwareOrderComparator.sort(runners);
 		for (Object runner : new LinkedHashSet<>(runners)) {
+			// 是否实现了 ApplicationRunner
 			if (runner instanceof ApplicationRunner) {
+				// 调用 ApplicationRunner#run 方法
 				callRunner((ApplicationRunner) runner, args);
 			}
+			// 是否实现了 CommandLineRunner
 			if (runner instanceof CommandLineRunner) {
+				// 调用 CommandLineRunner#run 方法
 				callRunner((CommandLineRunner) runner, args);
 			}
 		}

@@ -154,6 +154,7 @@ class BeanDefinitionLoader {
 			load(loader);
 		}
 		if (isEligible(source)) {
+			// 以注解的方式，将启动类bean信息存入beanDefinitionMap
 			this.annotatedReader.register(source);
 			return 1;
 		}
