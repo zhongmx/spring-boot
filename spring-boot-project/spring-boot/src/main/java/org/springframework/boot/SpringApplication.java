@@ -512,11 +512,14 @@ public class SpringApplication {
 	 * @see #configurePropertySources(ConfigurableEnvironment, String[])
 	 */
 	protected void configureEnvironment(ConfigurableEnvironment environment, String[] args) {
+		// 设置 environment 的 conversionService 属性
 		if (this.addConversionService) {
 			ConversionService conversionService = ApplicationConversionService.getSharedInstance();
 			environment.setConversionService((ConfigurableConversionService) conversionService);
 		}
+		// 配置 environment 的 PropertySource 属性源
 		configurePropertySources(environment, args);
+		// 配置 environment 的 activeProfiles 属性
 		configureProfiles(environment, args);
 	}
 
