@@ -424,16 +424,25 @@ public class AutoConfigurationImportSelector implements DeferredImportSelector, 
 			this.resourceLoader = resourceLoader;
 		}
 
+		// 这里用来处理自动配置类，比如过滤掉不符合匹配条件的自动配置类
+		// 调用入口：
+		// org.springframework.context.annotation.ConfigurationClassParser.DeferredImportSelectorGrouping.getImports
+		// this.group.process(deferredImport.getConfigurationClass().getMetadata(),
+		//						deferredImport.getImportSelector());
 		@Override
 		public void process(AnnotationMetadata annotationMetadata, DeferredImportSelector deferredImportSelector) {
 			Assert.state(deferredImportSelector instanceof AutoConfigurationImportSelector,
 					() -> String.format("Only %s implementations are supported, got %s",
 							AutoConfigurationImportSelector.class.getSimpleName(),
 							deferredImportSelector.getClass().getName()));
+			// 调用 getAutoConfigurationEntry 方法得到的自动配置类放入 autoConfigurationEntry 对象中
 			AutoConfigurationEntry autoConfigurationEntry = ((AutoConfigurationImportSelector) deferredImportSelector)
 					.getAutoConfigurationEntry(annotationMetadata);
+			// 将封装了自动配置类的 autoConfigurationEntry 对象装进 List<AutoConfigurationEntry> autoConfigurationEntries 集合
 			this.autoConfigurationEntries.add(autoConfigurationEntry);
+			// 遍历刚刚获取到的自动配置类列表
 			for (String importClassName : autoConfigurationEntry.getConfigurations()) {
+				// 这里符合条件的自动配置类作为 key ， annotationMetadata 作为值放入 Map<String, AnnotationMetadata> entries 集合
 				this.entries.putIfAbsent(importClassName, annotationMetadata);
 			}
 		}
