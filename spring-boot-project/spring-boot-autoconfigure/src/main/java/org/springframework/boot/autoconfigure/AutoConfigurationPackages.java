@@ -88,15 +88,18 @@ public abstract class AutoConfigurationPackages {
 	 * where the package name is set from your {@code @EnableAutoConfiguration}
 	 * configuration class or classes.
 	 * @param registry the bean definition registry
-	 * @param packageNames the package names to set
+	 * @param packageNames the package names to set 标注了注解 @SpringBootApplication 的 Spring boot 应用程序入口类所在的包
 	 */
 	public static void register(BeanDefinitionRegistry registry, String... packageNames) {
+		// 如果该 bean （AutoConfigurationPackages.class.getName()） 已经注册，则将要注册的包名称添加进去
 		if (registry.containsBeanDefinition(BEAN)) {
 			BeanDefinition beanDefinition = registry.getBeanDefinition(BEAN);
 			ConstructorArgumentValues constructorArguments = beanDefinition.getConstructorArgumentValues();
 			constructorArguments.addIndexedArgumentValue(0, addBasePackages(constructorArguments, packageNames));
 		}
 		else {
+			// 如果该 bean （AutoConfigurationPackages.class.getName()） 未注册，则注册该 bean
+			// 参数中提供的包名称会被设置到 bean 定义当中去
 			GenericBeanDefinition beanDefinition = new GenericBeanDefinition();
 			beanDefinition.setBeanClass(BasePackages.class);
 			beanDefinition.getConstructorArgumentValues().addIndexedArgumentValue(0, packageNames);
@@ -121,6 +124,7 @@ public abstract class AutoConfigurationPackages {
 
 		@Override
 		public void registerBeanDefinitions(AnnotationMetadata metadata, BeanDefinitionRegistry registry) {
+			// 将注解标注的元信息传入，获取相应的包名
 			register(registry, new PackageImports(metadata).getPackageNames().toArray(new String[0]));
 		}
 
