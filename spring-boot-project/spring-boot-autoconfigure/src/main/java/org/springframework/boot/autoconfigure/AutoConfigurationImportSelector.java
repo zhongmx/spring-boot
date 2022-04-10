@@ -133,9 +133,16 @@ public class AutoConfigurationImportSelector implements DeferredImportSelector, 
 		Set<String> exclusions = getExclusions(annotationMetadata, attributes);
 		// 检查要被排除的配置类，因为有些不是自动配置类，因此要抛出异常
 		checkExcludedClasses(configurations, exclusions);
+
+		// 将需要配被排除的配置类移除
 		configurations.removeAll(exclusions);
+		// getConfigurationClassFilter() 从 spring.factories 中获取 filter 实例对象
+		// filter(configurations) 根据 filter 对象 去匹配过滤不必要的自动配置类
 		configurations = getConfigurationClassFilter().filter(configurations);
+		// 获取了符合条件的自动配置类后， 出发 AutoConfigurationImportEvent 事件
+		// 目的是告诉 ConditionEvaluationReport 条件评估报告器对象来记录符合条件的自动配置类
 		fireAutoConfigurationImportEvents(configurations, exclusions);
+		// 将符合条件和要排除的自动配置类封装成 AutoConfigurationEntry 对象并返回
 		return new AutoConfigurationEntry(configurations, exclusions);
 	}
 
@@ -266,15 +273,22 @@ public class AutoConfigurationImportSelector implements DeferredImportSelector, 
 	}
 
 	protected List<AutoConfigurationImportFilter> getAutoConfigurationImportFilters() {
+		// 从项目中包括jar中的 META-INF/spring.factories 中 获取 key 为 AutoConfigurationImportFilter 的values
+		// 此处获取的就是 OnBeanCondition、OnClassCondition、OnWebApplicationCondition
 		return SpringFactoriesLoader.loadFactories(AutoConfigurationImportFilter.class, this.beanClassLoader);
 	}
 
 	private ConfigurationClassFilter getConfigurationClassFilter() {
 		if (this.configurationClassFilter == null) {
+			// 获取过滤对象 如：OnBeanCondition、OnClassCondition、OnWebApplicationCondition
 			List<AutoConfigurationImportFilter> filters = getAutoConfigurationImportFilters();
 			for (AutoConfigurationImportFilter filter : filters) {
+				// 根据实现的不同 aware方法，将 beanClassLoader,beanFactory等注入到 filter 对象中
+				// 此处的 filter 对象就是 OnBeanCondition、OnClassCondition、OnWebApplicationCondition 等，这些个实例都实现了不同的 Aware接口
 				invokeAwareMethods(filter);
 			}
+			// 构建 ConfigurationClassFilter 实例，把 filter 对象设置进去
+			// 供后续使用，如：org.springframework.boot.autoconfigure.AutoConfigurationImportSelector.ConfigurationClassFilter.filter
 			this.configurationClassFilter = new ConfigurationClassFilter(this.beanClassLoader, filters);
 		}
 		return this.configurationClassFilter;
@@ -376,10 +390,15 @@ public class AutoConfigurationImportSelector implements DeferredImportSelector, 
 
 		List<String> filter(List<String> configurations) {
 			long startTime = System.nanoTime();
+			// 将从 spring.factories 中获取到的自动配置类列表 转换成 字符串数组
 			String[] candidates = StringUtils.toStringArray(configurations);
 			boolean skipped = false;
 			for (AutoConfigurationImportFilter filter : this.filters) {
+				// 用各个 filter（OnBeanCondition、OnClassCondition、OnWebApplicationCondition）来判断每个自动配置类中标注的
+				// @ConditionalOnClass,@ConditionalOnBean,@ConditionalOnWebApplication注解的值是否匹配
+				// 注意：candidates 和 match 一一对应
 				boolean[] match = filter.match(candidates, this.autoConfigurationMetadata);
+				// 遍历数组，注意 match 顺序和 candidates 的自动配置类一一对应
 				for (int i = 0; i < match.length; i++) {
 					if (!match[i]) {
 						candidates[i] = null;
