@@ -116,6 +116,7 @@ public class AutoConfigurationImportSelector implements DeferredImportSelector, 
 	 * @return the auto-configurations that should be imported
 	 */
 	protected AutoConfigurationEntry getAutoConfigurationEntry(AnnotationMetadata annotationMetadata) {
+		// isEnabled 获取是否有配置 spring.boot.enableautoconfiguration 属性，默认返回 true
 		if (!isEnabled(annotationMetadata)) {
 			return EMPTY_ENTRY;
 		}
