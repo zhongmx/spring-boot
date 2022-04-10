@@ -121,9 +121,17 @@ public class AutoConfigurationImportSelector implements DeferredImportSelector, 
 			return EMPTY_ENTRY;
 		}
 		AnnotationAttributes attributes = getAttributes(annotationMetadata);
+		// 获取 spring.factories 文件配置的所有自动配置类
 		List<String> configurations = getCandidateConfigurations(annotationMetadata, attributes);
+		// 使用 LinkedHashSet 移除重复的元素
+		// 代码实现方式为：new ArrayList<>(new LinkedHashSet<>(list))
 		configurations = removeDuplicates(configurations);
+
+		// 得到要排除的自动化配置类，比如注解属性 exclude 的配置类
+		// 举例：@SpringBootApplication(exclude = CustomExcludeTest.class)
+		// 这个举例中将会获取到 exclude = CustomExcludeTest.clas 的数据
 		Set<String> exclusions = getExclusions(annotationMetadata, attributes);
+		// 检查要被排除的配置类，因为有些不是自动配置类，因此要抛出异常
 		checkExcludedClasses(configurations, exclusions);
 		configurations.removeAll(exclusions);
 		configurations = getConfigurationClassFilter().filter(configurations);
@@ -176,6 +184,9 @@ public class AutoConfigurationImportSelector implements DeferredImportSelector, 
 	 * @return a list of candidate configurations
 	 */
 	protected List<String> getCandidateConfigurations(AnnotationMetadata metadata, AnnotationAttributes attributes) {
+		// getSpringFactoriesLoaderFactoryClass() 返回的是 EnableAutoConfiguration.class
+		// getBeanClassLoader() 返回的是 beanClassLoader（类加载器）
+		// 此处就是从项目里面包括jar包中的 META-INF/spring.factories 文件中 key 为 EnableAutoConfiguration 的 values
 		List<String> configurations = SpringFactoriesLoader.loadFactoryNames(getSpringFactoriesLoaderFactoryClass(),
 				getBeanClassLoader());
 		Assert.notEmpty(configurations, "No auto configuration classes found in META-INF/spring.factories. If you "
