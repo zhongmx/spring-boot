@@ -122,6 +122,7 @@ public class AutoConfigurationImportSelector implements DeferredImportSelector, 
 		}
 		AnnotationAttributes attributes = getAttributes(annotationMetadata);
 		// 获取 spring.factories 文件配置的所有自动配置类
+		// 注意 此时这些自动配置类是没有实例化的
 		List<String> configurations = getCandidateConfigurations(annotationMetadata, attributes);
 		// 使用 LinkedHashSet 移除重复的元素
 		// 代码实现方式为：new ArrayList<>(new LinkedHashSet<>(list))
@@ -466,7 +467,7 @@ public class AutoConfigurationImportSelector implements DeferredImportSelector, 
 					() -> String.format("Only %s implementations are supported, got %s",
 							AutoConfigurationImportSelector.class.getSimpleName(),
 							deferredImportSelector.getClass().getName()));
-			// 调用 getAutoConfigurationEntry 方法得到的自动配置类放入 autoConfigurationEntry 对象中
+			// 调用 getAutoConfigurationEntry 方法得到的自动配置类放入 autoConfigurationEntry 对象中【核心】
 			AutoConfigurationEntry autoConfigurationEntry = ((AutoConfigurationImportSelector) deferredImportSelector)
 					.getAutoConfigurationEntry(annotationMetadata);
 			// 将封装了自动配置类的 autoConfigurationEntry 对象装进 List<AutoConfigurationEntry> autoConfigurationEntries 集合
@@ -483,13 +484,18 @@ public class AutoConfigurationImportSelector implements DeferredImportSelector, 
 			if (this.autoConfigurationEntries.isEmpty()) {
 				return Collections.emptyList();
 			}
+			// 获取所有需要排除的自动配置类的 set 集合
+			// （经过 org.springframework.boot.autoconfigure.AutoConfigurationImportSelector.AutoConfigurationGroup.process 都处理好了,只是 set 集合存储）
 			Set<String> allExclusions = this.autoConfigurationEntries.stream()
 					.map(AutoConfigurationEntry::getExclusions).flatMap(Collection::stream).collect(Collectors.toSet());
+			// 获取所有的自动配置类的 set 集合
+			// （经过 org.springframework.boot.autoconfigure.AutoConfigurationImportSelector.AutoConfigurationGroup.process 都处理好了,只是 set 集合存储）
 			Set<String> processedConfigurations = this.autoConfigurationEntries.stream()
 					.map(AutoConfigurationEntry::getConfigurations).flatMap(Collection::stream)
 					.collect(Collectors.toCollection(LinkedHashSet::new));
 			processedConfigurations.removeAll(allExclusions);
 
+			// 对标注有 @Order 注解的自动配置类进行排序
 			return sortAutoConfigurations(processedConfigurations, getAutoConfigurationMetadata()).stream()
 					.map((importClassName) -> new Entry(this.entries.get(importClassName), importClassName))
 					.collect(Collectors.toList());
