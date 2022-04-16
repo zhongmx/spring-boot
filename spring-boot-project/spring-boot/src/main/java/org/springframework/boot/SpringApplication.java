@@ -276,8 +276,11 @@ public class SpringApplication {
 		// 推断web应用类型 REACTIVE、NONE、SERVLET，常用一般是 servlet
 		this.webApplicationType = WebApplicationType.deduceFromClasspath();
 		// 设置系统初始化器【初始化 classpath 下 META-INF/spring.factories中已经配置的 ApplicationContextInitializer】
+		// 这些系统初始化器会实例化
+		// 在 run 方法中 prepareContext() 会用到
 		setInitializers((Collection) getSpringFactoriesInstances(ApplicationContextInitializer.class));
 		// 设置监听器【初始化 classpath 下 META-INF/spring.factories中已经配置的 ApplicationListener】
+		// 这些监听器会实例化
 		setListeners((Collection) getSpringFactoriesInstances(ApplicationListener.class));
 		// 配置主应用类【根据调用栈，推断出 main 方法名】
 		this.mainApplicationClass = deduceMainApplicationClass();
@@ -303,6 +306,10 @@ public class SpringApplication {
 	 * Run the Spring application, creating and refreshing a new
 	 * {@link ApplicationContext}.
 	 *
+	 * ConfigurableApplicationContext 是 ApplicationContext 接口的子接口
+	 * 在 ApplicationContext 基础上增加了 配置上下文的工具
+	 * ConfigurableApplicationContext 是容器的高级接口
+	 *
 	 * @param args the application arguments (usually passed from a Java main method)
 	 * @return a running {@link ApplicationContext}
 	 */
@@ -313,6 +320,7 @@ public class SpringApplication {
 		stopWatch.start();
 		ConfigurableApplicationContext context = null;
 		configureHeadlessProperty();
+		//【1】 获取并启动监听器
 		// 获取监听器，获取spring.factories中的 SpringApplicationRunListener
 		// 如：org.springframework.boot.SpringApplicationRunListener = org.springframework.boot.context.event.EventPublishingRunListener
 		SpringApplicationRunListeners listeners = getRunListeners(args);
@@ -321,18 +329,20 @@ public class SpringApplication {
 		try {
 			// 初始化默认应用参数类
 			ApplicationArguments applicationArguments = new DefaultApplicationArguments(args);
+			// 【2】 构建应用上下文环境
 			// 根据运行监听器（SpringApplicationRunListeners）和应用参数（ApplicationArguments）来准备 Spring 环境，加载属性配置
 			// 执行完成后，所有的 environment 的属性都会加载进来，包括 application.properties 和外部的属性配置
 			ConfigurableEnvironment environment = prepareEnvironment(listeners, applicationArguments);
 			configureIgnoreBeanInfo(environment);
 			// 创建 Banner 打印类
 			Banner printedBanner = printBanner(environment);
-			// 创建应用上下文（Spring容器）
+			// 【3】 创建(实例化)应用上下文（Spring容器）
 			context = createApplicationContext();
+			// 【4】 刷新应用上下文前的准备阶段
 			// 应用上下文的前置处理（Spring容器的前置处理）
-			// 主要是调用所有初始化类的 initialize 方法
+			// 主要是调用所有系统初始化器的 initialize 方法 （与new SpringApplication 中设置的系统初始化器就对应起来了）
 			prepareContext(context, environment, listeners, applicationArguments, printedBanner);
-			// 刷新容器
+			// 【5】 刷新应用上下文
 			refreshContext(context);
 			// 应用上下文的后置处理（Spring容器的后置处理）， 默认实现为空
 			afterRefresh(context, applicationArguments);
@@ -364,12 +374,14 @@ public class SpringApplication {
 	private ConfigurableEnvironment prepareEnvironment(SpringApplicationRunListeners listeners,
 													   ApplicationArguments applicationArguments) {
 		// Create and configure the environment
-		// 获取对应的ConfigurableEnvironment
+		// 获取对应的ConfigurableEnvironment【创建并配置相应的环境】
 		ConfigurableEnvironment environment = getOrCreateEnvironment();
-		// 进行配置
+		// 根据用户配置，配置 environment 系统环境
 		configureEnvironment(environment, applicationArguments.getSourceArgs());
 		ConfigurationPropertySources.attach(environment);
 		// 发布环境已经准备好的事件
+		// 其中一个重要的监听器 ConfigFileApplicationListener 就是加载项目配置文件的监听器
+		// ConfigFileApplicationListener 在 new SpringApplication 的时候就已经设置了
 		listeners.environmentPrepared(environment);
 		// 把准备好的环境绑定到 SpringApplication 中
 		bindToSpringApplication(environment);
@@ -394,11 +406,12 @@ public class SpringApplication {
 
 	private void prepareContext(ConfigurableApplicationContext context, ConfigurableEnvironment environment,
 								SpringApplicationRunListeners listeners, ApplicationArguments applicationArguments, Banner printedBanner) {
-		// 设置 context 的 environment 属性，enviroment 表示当前应用程序正在运行的环境
+		// 设置 context 的 environment 属性，environment 表示当前应用程序正在运行的环境
 		context.setEnvironment(environment);
+		// 执行容器后置处理
 		// 执行 context 后置处理，配置一些属性，如：beanNameGenerator 等
 		postProcessApplicationContext(context);
-		// 初始化 ApplicationContextInitializer 包括 spring.factories和自定义的实例
+		// 应用系统初始化器
 		applyInitializers(context);
 		// 发送容器已经准备好的事件，通知各监听器
 		listeners.contextPrepared(context);
@@ -408,10 +421,10 @@ public class SpringApplication {
 		}
 		// Add boot specific singleton beans
 		ConfigurableListableBeanFactory beanFactory = context.getBeanFactory();
-		// 注册启动参数 bean，这里将容器指定的参数封装成bean，注入容器
+		// 注册启动参数 bean，这里将容器指定的参数封装成单例 bean，注册到容器中
 		beanFactory.registerSingleton("springApplicationArguments", applicationArguments);
 		if (printedBanner != null) {
-			// 注册 Banner bean
+			// 将 printedBanner 封装成单例 bean ，注册到容器中
 			beanFactory.registerSingleton("springBootBanner", printedBanner);
 		}
 		if (beanFactory instanceof DefaultListableBeanFactory) {
@@ -452,6 +465,7 @@ public class SpringApplication {
 
 	private SpringApplicationRunListeners getRunListeners(String[] args) {
 		Class<?>[] types = new Class<?>[]{SpringApplication.class, String[].class};
+		// SpringApplicationRunListeners 负责在 SpringBoot 启动的不同阶段，广播出不同的消息，传递给 ApplicationListener 监听器实现类
 		return new SpringApplicationRunListeners(logger,
 				getSpringFactoriesInstances(SpringApplicationRunListener.class, types, this, args));
 	}
@@ -531,8 +545,10 @@ public class SpringApplication {
 			environment.setConversionService((ConfigurableConversionService) conversionService);
 		}
 		// 配置 environment 的 PropertySource 属性源
+		// 将 main 方法的 args 封装成 SimpleCommandLinePropertySource 加入环境中
 		configurePropertySources(environment, args);
 		// 配置 environment 的 activeProfiles 属性
+		// 激活相应的配置文件
 		configureProfiles(environment, args);
 	}
 
