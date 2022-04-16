@@ -341,6 +341,7 @@ public class SpringApplication {
 			// 【4】 刷新应用上下文前的准备阶段
 			// 应用上下文的前置处理（Spring容器的前置处理）
 			// 主要是调用所有系统初始化器的 initialize 方法 （与new SpringApplication 中设置的系统初始化器就对应起来了）
+			// 给 context 设置属性，并注册一些 BeanDefinition 如 启动类
 			prepareContext(context, environment, listeners, applicationArguments, printedBanner);
 			// 【5】 刷新应用上下文
 			refreshContext(context);
@@ -763,6 +764,7 @@ public class SpringApplication {
 			logger.debug("Loading source " + StringUtils.arrayToCommaDelimitedString(sources));
 		}
 		// 创建 BeanDefinitionLoader
+		// BeanDefinitionLoader 中设置了 注解形式读取器 xml 形式读取器 类路径扫描器等
 		BeanDefinitionLoader loader = createBeanDefinitionLoader(getBeanDefinitionRegistry(context), sources);
 		if (this.beanNameGenerator != null) {
 			loader.setBeanNameGenerator(this.beanNameGenerator);
