@@ -267,18 +267,19 @@ public class SpringApplication {
 	 */
 	@SuppressWarnings({"unchecked", "rawtypes"})
 	public SpringApplication(ResourceLoader resourceLoader, Class<?>... primarySources) {
+		// 设置资源加载器，现在传进来的是null
 		this.resourceLoader = resourceLoader;
 		Assert.notNull(primarySources, "PrimarySources must not be null");
 		// primarySources 为 run 方法传入自定义的启动引导类（可以一次启动多个）
 		// 如：SpringApplication.run(SampleTomcatApplication.class, args) 中的 SampleTomcatApplication
 		this.primarySources = new LinkedHashSet<>(Arrays.asList(primarySources));
-		// 推断web应用类型 REACTIVE、NONE、SERVLET
+		// 推断web应用类型 REACTIVE、NONE、SERVLET，常用一般是 servlet
 		this.webApplicationType = WebApplicationType.deduceFromClasspath();
-		// 设置系统初始化器
+		// 设置系统初始化器【初始化 classpath 下 META-INF/spring.factories中已经配置的 ApplicationContextInitializer】
 		setInitializers((Collection) getSpringFactoriesInstances(ApplicationContextInitializer.class));
-		// 设置监听器
+		// 设置监听器【初始化 classpath 下 META-INF/spring.factories中已经配置的 ApplicationListener】
 		setListeners((Collection) getSpringFactoriesInstances(ApplicationListener.class));
-		// 配置主应用类
+		// 配置主应用类【根据调用栈，推断出 main 方法名】
 		this.mainApplicationClass = deduceMainApplicationClass();
 	}
 
@@ -1356,6 +1357,8 @@ public class SpringApplication {
 	 * @return the running {@link ApplicationContext}
 	 */
 	public static ConfigurableApplicationContext run(Class<?>[] primarySources, String[] args) {
+		// 1、初始化 SpringApplication
+		// 2、执行 run 方法
 		return new SpringApplication(primarySources).run(args);
 	}
 
