@@ -155,6 +155,7 @@ public class ServletWebServerApplicationContext extends GenericWebApplicationCon
 	protected void onRefresh() {
 		super.onRefresh();
 		try {
+			// 会获取嵌入式的 Servlet 容器工厂，并通过工厂来获取 Servlet 容器
 			createWebServer();
 		}
 		catch (Throwable ex) {
@@ -174,6 +175,7 @@ public class ServletWebServerApplicationContext extends GenericWebApplicationCon
 		WebServer webServer = this.webServer;
 		ServletContext servletContext = getServletContext();
 		if (webServer == null && servletContext == null) {
+			// 获取嵌入式 Servlet（TomcatServletWebServerFactory） 容器工厂 （TomcatServletWebServerFactory 是 ServletWebServerFactory 的实现）
 			ServletWebServerFactory factory = getWebServerFactory();
 			this.webServer = factory.getWebServer(getSelfInitializer());
 			getBeanFactory().registerSingleton("webServerGracefulShutdown",
