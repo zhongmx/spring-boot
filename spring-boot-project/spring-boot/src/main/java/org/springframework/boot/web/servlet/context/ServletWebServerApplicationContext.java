@@ -177,6 +177,7 @@ public class ServletWebServerApplicationContext extends GenericWebApplicationCon
 		if (webServer == null && servletContext == null) {
 			// 获取嵌入式 Servlet（TomcatServletWebServerFactory） 容器工厂 （TomcatServletWebServerFactory 是 ServletWebServerFactory 的实现）
 			ServletWebServerFactory factory = getWebServerFactory();
+			// getSelfInitializer() 是 DispatcherServelt 注册到 Tomcat 中的 入口
 			this.webServer = factory.getWebServer(getSelfInitializer());
 			getBeanFactory().registerSingleton("webServerGracefulShutdown",
 					new WebServerGracefulShutdownLifecycle(this.webServer));

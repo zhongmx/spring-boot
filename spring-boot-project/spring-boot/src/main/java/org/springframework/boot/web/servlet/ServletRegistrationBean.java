@@ -175,6 +175,7 @@ public class ServletRegistrationBean<T extends Servlet> extends DynamicRegistrat
 	@Override
 	protected ServletRegistration.Dynamic addRegistration(String description, ServletContext servletContext) {
 		String name = getServletName();
+		// 此处就是把 DispatcherServlet 注册到 tomcat 容器中
 		return servletContext.addServlet(name, this.servlet);
 	}
 
